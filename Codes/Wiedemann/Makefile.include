@@ -1,0 +1,96 @@
+# Common Makefile defs for all examples in the BSV Small Example suite
+# This file in 'include'd by the local Makefiles in each example subdirectory
+
+BSC=bsc
+BSC_FLAGS=-no-use-negate -aggressive-conditions -bdir tmp  -simdir tmpb  -vdir tmpv  -info-dir tmp  -p tmp:+
+BSC_BEXTRA_FLAGS ?=
+BSC_VEXTRA_FLAGS ?=
+CXX=/usr/bin/g++
+
+SOURCES = Tb.bsv
+TOPFILE = Tb.bsv
+TOPMODULE = mkTb
+
+BEXE = tmpb/$(TOPMODULE)
+VEXE = tmpv/$(TOPMODULE)
+
+.PHONY: help
+help:
+	@echo "Useful targets:"
+	@echo "  help          - display this help message"
+	@echo ""
+	@echo "  bexe          - build Bluesim executable"
+	@echo "  bsim          - run Bluesim executable"
+	@echo "  bsimh         - ... with flag -h (show available Bluesim flags)"
+	@echo "  bsimr         - ... with flags -cc -r (show rule firings each cycle)"
+	@echo "  bsimss        - ... with flags -cc -ss (show state each cycle)"
+	@echo "  bsimrss       - ... with flags -cc -r -ss"
+	@echo "  bsimvcd       - ... with flag -V (dump VCD data to file tmpb/dump.vcd)"
+	@echo ""
+	@echo "  vexe          - build Verilog executable"
+	@echo "  vsim          - run iVerilog executable"
+	@echo "  vsimvcd       - ... with flag +bscvcd (dump VCD data to file tmpv/dump.vcd)"
+	@echo ""
+	@echo "  clean         - remove temporary files and output files"
+	@echo "  fullclean     - also remove executables"
+
+# ================================================================
+# BLUESIM
+
+# build Bluesim executable
+.PHONY: bexe
+bexe: $(BEXE)
+
+$(BEXE): $(SOURCES)
+	mkdir -p  tmp
+	mkdir -p  tmpb
+	$(BSC) $(BSC_FLAGS) $(BSC_BEXTRA_FLAGS) -sim -u $(TOPFILE)
+	env CXX=g++ $(BSC) $(BSC_FLAGS) -sim -o $@ -e $(TOPMODULE) tmp/*.ba
+
+# invoke the Bluesim executable
+.PHONY: bsim  bsimh  bsimr  bsimss  bsimrss  bsimvcd
+bsim: $(BEXE)
+	tmpb/$(TOPMODULE)
+bsimh: $(BEXE)
+	tmpb/$(TOPMODULE)  -h
+bsimr: $(BEXE)
+	tmpb/$(TOPMODULE)  -cc  -r
+bsimss: $(BEXE)
+	tmpb/$(TOPMODULE)  -cc  -ss
+bsimrss: $(BEXE)
+	tmpb/$(TOPMODULE)  -cc  -r  -ss
+bsimvcd: $(BEXE)
+	tmpb/$(TOPMODULE)  -V
+
+# ================================================================
+# VERILOG SIM
+
+# compile to Verilog, and then build Verilog executable
+.PHONY: vexe
+vexe: $(VEXE)
+
+$(VEXE): $(SOURCES)
+	mkdir -p  tmp
+	mkdir -p  tmpv
+	$(BSC) $(BSC_FLAGS) $(BSC_VEXTRA_FLAGS) -verilog -u $(TOPFILE)
+	iverilog -Wall -DTOP=$(TOPMODULE) -o $@ -y$(BLUESPECDIR)/Verilog $(BLUESPECDIR)/Verilog/main.v tmpv/*.v
+
+# invoke the Verilog executable
+.PHONY: vsim  vsimvcd
+vsim: $(VEXE)
+	tmpv/$(TOPMODULE)
+vsimvcd: $(VEXE)
+	tmpv/$(TOPMODULE)  +bscvcd
+
+# ================================================================
+# CLEANUP
+
+.PHONY: clean
+clean:
+	rm -r -f  *~  tmp/*  tmpb/*.*  tmpv/*.*
+	rm -fR obj
+
+.PHONY: fullclean
+fullclean:
+	make   clean
+	rm -r -f  $(BEXE)  $(VEXE)

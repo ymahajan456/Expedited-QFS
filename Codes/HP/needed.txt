@@ -1,0 +1,20 @@
+// mod types
+a%m both hhp returns hhp
+a%{2^x} returns int
+
+//typecast
+a=b
+int
+uint64_t
+
+
+
+
+// arithmetic
+a/2 returns hhp
+a=b
+a==int
+a%int
+a%uint64_t
+
+modpower with return type of p

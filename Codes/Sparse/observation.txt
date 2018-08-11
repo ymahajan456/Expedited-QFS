@@ -1,0 +1,4 @@
+- Look at BRAM usage (Amount of memory used)
+- Memory Accesses
+- Time taken (# of cycles)
+- Hardware Usage
